@@ -147,6 +147,29 @@ class API:
         # Return the read users
         return users
 
+    def add_posts(self, body, group_id = None, parent_id = None, tweet = False):
+        """
+        Submits a post with the specified body text as the authenticated user.
+        The destination group ID is optional (if none, the post will be public);
+        the parent ID is optional (if none, the post will be top-level);
+        the post can be optionally sent to Twitter. If a parent ID is supplied
+        for a group post, the group ID is not necessary.
+
+        Requires authentication; post will originate from that user.
+        """
+
+        # Format the request URL
+        url = "http://www.tweetworks.com/posts/add.xml"
+
+        # Format the post data
+        data = {"data[Post][body]" : body,
+                "data[Post][groupId]" : ("", str(group_id))[group_id != None],
+                "data[Post][parentId]" : ("", str(parent_id))[parent_id != None],
+                "data[Post][sendToTwitter]" : (0, 1)[tweet]}
+
+        # Read the post from the response XML
+        return Post.Post(self.request(url, data))
+
     def contributed_posts(self, username, recent = False):
         """
         Retrieves all posts contributed by the specified user; optionally only
