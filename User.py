@@ -60,10 +60,10 @@ class User:
 
     def xml(self):
         """
-        Generates an XML element tree for this Post.
+        Generates an XML element tree for this User.
         """
 
-        # Construct the XML tree representing this Post
+        # Construct the XML tree representing this User
         xml = E("user",
                 E("id", str(self.id)),
                 E("username", self.username),
