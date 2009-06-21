@@ -16,12 +16,14 @@ import lxml.etree
 # Tweetworks includes
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import Post
+import Group
 
 class API:
     """
     Implement the Tweetworks API with HTTP POSTs.
 
-    In general, API methods are named for their URL.
+    In general, API methods are named for their URL, and are organized by type:
+    post-, group-, and user-related methods.
     """
 
     class TweetworksException(Exception):
@@ -114,14 +116,44 @@ class API:
         # Return the read posts
         return posts
 
+    def read_group_xml(self, groups_xml):
+        """
+        Converts a <groups> element to a list of Group objects.
+        """
+
+        # Loop over the <group> elements
+        groups = []
+        for group_xml in groups_xml.xpath("/groups/group"):
+            group_string = lxml.etree.tostring(group_xml)
+            groups.append(Group.Group(lxml.etree.fromstring(group_string)))
+
+        # Return the read groups
+        return groups
+
     def contributed_posts(self, username, recent = False):
         """
         Retrieves all posts contributed by the specified user; optionally only
         recently updated posts. Posts are returned in descending order by date.
+
+        Requires authentication from the specified user.
         """
 
         # Format the request URL
         url = "http://www.tweetworks.com/posts/contributed/%s/%s.xml" % (username, ("newest", "updated")[recent])
+
+        # Read the posts from the response XML
+        return self.read_post_xml(self.request(url))
+
+    def group_posts(self, group, recent = False):
+        """
+        Retrieves all posts contained in the specified group; optionally only
+        recently updated posts. Posts are returned in descending order by date.
+
+        A private group requires authentication from a user in that group.
+        """
+
+        # Format the request URL
+        url = "http://www.tweetworks.com/posts/group/%s/%s.xml" % (group, ("newest", "updated")[recent])
 
         # Read the posts from the response XML
         return self.read_post_xml(self.request(url))
@@ -143,3 +175,60 @@ class API:
             # Something weird happened to result in non-unary post result
             raise API.TweetworksException("%d posts were returned" % len(posts),
                                           url)
+
+    def index_groups(self):
+        """
+        Retrieves the list of Tweetworks groups.
+        """
+
+        # Format the request URL
+        url = "http://www.tweetworks.com/groups/index.xml"
+
+        # Read the groups from the response XML
+        return self.read_group_xml(self.request(url))
+
+    def join_groups(self, group):
+        """
+        Retrieves the list of Tweetworks groups.
+        """
+
+        # Format the request URL
+        url = "http://www.tweetworks.com/groups/join/%s.xml" % group
+
+        # Read the groups from the response XML
+        groups = self.read_group_xml(self.request(url))
+        if len(groups) == 1:
+            # Return the joined group
+            return groups[0]
+        else:
+            # Something weird happened to result in non-unary group result
+            raise API.TweetworksException("%d groups were joined" % len(posts),
+                                          url)
+
+    def joined_groups(self, username):
+        """
+        Retrieves all groups of which the specified user is a member.
+
+        Requires authentication from the specified user.
+        """
+
+        # Format the request URL
+        url = "http://www.tweetworks.com/groups/joined/%s.xml" % username
+
+        # Read the groups from the response XML
+        return self.read_group_xml(self.request(url))
+
+    def search_groups(self, query):
+        """
+        Searches groups for the specified query string, including name,
+        description, and posts.
+        """
+
+        # Format the request URL
+        url = "http://www.tweetworks.com/groups/search.xml"
+
+        # Format the post data
+        data = {"data[query]" : query}
+
+        # Read the groups from the response XML
+        return self.read_group_xml(self.request(url, data))
