@@ -32,7 +32,7 @@ class Group:
         self.id = int(xml.xpath("/group/id/text()")[0])
 
         # Group name
-        self.name = str(xml.xpath("/group/name/text()")[0])
+        self.name = unicode(xml.xpath("/group/name/text()")[0])
 
         # Whether or not this group is private
         private = xml.xpath("/group/private/text()")
@@ -44,7 +44,7 @@ class Group:
         # Prose description of the group
         description = xml.xpath("/group/description/text()")
         if len(description) == 1:
-            self.description = str(description[0])
+            self.description = unicode(description[0])
         else:
             self.description = ""
 

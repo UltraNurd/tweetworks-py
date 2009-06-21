@@ -32,13 +32,13 @@ class User:
         self.id = int(xml.xpath("/user/id/text()")[0])
 
         # User's Twitter username
-        self.username = str(xml.xpath("/user/username/text()")[0])
+        self.username = unicode(xml.xpath("/user/username/text()")[0])
 
         # User avatar URL (loaded from Amazon S3, obtained from Twitter)
-        self.avatar_url = str(xml.xpath("/user/avatar_url/text()")[0])
+        self.avatar_url = unicode(xml.xpath("/user/avatar_url/text()")[0])
 
         # User's "real" name
-        self.name = str(xml.xpath("/user/name/text()")[0])
+        self.name = unicode(xml.xpath("/user/name/text()")[0])
 
         # Twitter ID of the user
         self.twitter_id = int(xml.xpath("/user/twitter_id/text()")[0])

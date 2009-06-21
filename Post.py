@@ -76,7 +76,7 @@ class Post:
             self.bingo = False
 
         # The text contents of the post
-        self.body = str(xml.xpath("/post/body/text()")[0])
+        self.body = unicode(xml.xpath("/post/body/text()")[0])
 
         # The timestamp of the post
         self.created = iso8601.parse_date(xml.xpath("/post/created/text()")[0])
