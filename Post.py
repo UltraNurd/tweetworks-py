@@ -15,10 +15,26 @@ class Post:
     Represents the data fields of a single Tweetworks post.
     """
 
-    def __init__(self, xml):
+    def __init__(self, xml = None):
         """
-        Reads post fields from the XML.
+        Reads post fields from the XML, or create an empty post.
         """
+
+        # Initialize an empty post if no XML was provided
+        if xml == None:
+            self.id = None
+            self.user_id = None
+            self.group_id = None
+            self.parent_id = None
+            self.twitter_id = None
+            self.bingo = False
+            self.body = ""
+            self.created = datetime.datetime.now()
+            self.group = None
+            self.user = None
+            self.replies = 0
+            self.posts = []
+            return
 
         # Post ID
         self.id = int(xml.xpath("/post/id/text()")[0])
@@ -36,7 +52,7 @@ class Post:
         # Parent ID, if the post was a reply
         parent_id = xml.xpath("/post/parent_id/text()")
         if len(parent_id) == 1:
-            self.parent_id = int(parent_id)
+            self.parent_id = int(parent_id[0])
         else:
             self.parent_id = None
         
@@ -68,7 +84,18 @@ class Post:
             self.group = None
 
         # Post author metadata
-        #self.user = User.User(xml.xpath("/post/user")[0])
+        user_string = lxml.etree.tostring(xml.xpath("/post/user")[0])
+        #self.user = User.User(lxml.etree.fromstring(user_string))
 
         # The number of replies to this post, if any
-        self.replies = int(xml.xpath("/post/replies/text()")[0])
+        replies = xml.xpath("/post/replies/text()")
+        if len(replies) == 1:
+            self.replies = int(replies[0])
+        else:
+            self.replies = 0
+
+        # The replies to this post, if any (select only non-empty child posts)
+        self.posts = []
+        for post_xml in xml.xpath("/post/posts/post[node()]"):
+            post_string = lxml.etree.tostring(post_xml)
+            self.posts.append(Post(lxml.etree.fromstring(post_string)))
