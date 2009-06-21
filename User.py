@@ -32,13 +32,13 @@ class User:
         self.id = int(xml.xpath("/user/id/text()")[0])
 
         # User's Twitter username
-        self.username = xml.xpath("/user/username/text()")[0]
+        self.username = str(xml.xpath("/user/username/text()")[0])
 
         # User avatar URL (loaded from Amazon S3, obtained from Twitter)
-        self.avatar_url = xml.xpath("/user/avatar_url/text()")[0]
+        self.avatar_url = str(xml.xpath("/user/avatar_url/text()")[0])
 
         # User's "real" name
-        self.name = xml.xpath("/user/name/text()")[0]
+        self.name = str(xml.xpath("/user/name/text()")[0])
 
         # Twitter ID of the user
         self.twitter_id = int(xml.xpath("/user/twitter_id/text()")[0])
@@ -66,9 +66,9 @@ class User:
         # Construct the XML tree representing this Post
         xml = E("user",
                 E("id", str(self.id)),
-                E("username", str(self.username)),
-                E("avatar_url", str(self.avatar_url)),
-                E("name", str(self.name)),
+                E("username", self.username),
+                E("avatar_url", self.avatar_url),
+                E("name", self.name),
                 E("twitter_id", str(self.twitter_id)),
                 )
         
