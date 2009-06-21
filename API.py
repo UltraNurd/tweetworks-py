@@ -17,6 +17,7 @@ import lxml.etree
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import Post
 import Group
+import User
 
 class API:
     """
@@ -89,6 +90,8 @@ class API:
             # Authentication error
             if e.code == 401:
                 raise API.TweetworksException("Authentication required", url)
+            else:
+                raise API.TweetworksException(str(e), url)
 
         # Parse the XML response
         xml_response = lxml.etree.parse(response)
@@ -129,6 +132,20 @@ class API:
 
         # Return the read groups
         return groups
+
+    def read_user_xml(self, users_xml):
+        """
+        Converts a <users> element to a list of User objects.
+        """
+
+        # Loop over the <user> elements
+        users = []
+        for user_xml in users_xml.xpath("/users/user"):
+            user_string = lxml.etree.tostring(user_xml)
+            users.append(User.User(lxml.etree.fromstring(user_string)))
+
+        # Return the read users
+        return users
 
     def contributed_posts(self, username, recent = False):
         """
@@ -232,3 +249,39 @@ class API:
 
         # Read the groups from the response XML
         return self.read_group_xml(self.request(url, data))
+
+    def group_users(self, group):
+        """
+        Retrieves the list of users who are members of the specified group.
+        """
+
+        # Format the request URL
+        url = "http://www.tweetworks.com/users/group/%s.xml" % group
+
+        # Read the users from the response XML
+        return self.read_user_xml(self.request(url))
+
+    def index_users(self):
+        """
+        Retrieves the list of Tweetworks users.
+        """
+
+        # Format the request URL
+        url = "http://www.tweetworks.com/users/index.xml"
+
+        # Read the users from the response XML
+        return self.read_user_xml(self.request(url))
+
+    def search_users(self, query):
+        """
+        Searches usernames and real names for the specified query string..
+        """
+
+        # Format the request URL
+        url = "http://www.tweetworks.com/users/search.xml"
+
+        # Format the post data
+        data = {"data[query]" : query}
+
+        # Read the users from the response XML
+        return self.read_user_xml(self.request(url, data))
