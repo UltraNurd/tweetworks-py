@@ -12,7 +12,7 @@ import lxml.etree
 from lxml.builder import E
 
 # Tweetworks includes
-#import Group
+import Group
 import User
 
 class Post:
@@ -90,8 +90,8 @@ class Post:
 
         # Group metadata, if the post wasn't public
         if self.group_id != None:
-            self.group = None
-            #self.group = Group.Group(xml.xpath("/post/group")[0])
+            group_string = lxml.etree.tostring(xml.xpath("/post/group")[0])
+            self.group = Group.Group(lxml.etree.fromstring(group_string))
         else:
             self.group = None
 
@@ -142,9 +142,19 @@ class Post:
                 E("body", self.body),
                 E("created", str(self.created).replace(" ", "T")),
                 E("replies", str(self.replies)),
-                #(E("group"), self.group.xml())[self.group != None],
-                (E("user"), self.user.xml())[self.user != None]
                 )
+
+        # Append the parent group, if any
+        if self.group == None:
+            xml.append(E("group", E("id"), E("name"), E("private")))
+        else:
+            xml.append(self.group.xml())
+
+        # Append the author user
+        if self.user == None:
+            xml.append(E("user"))
+        else:
+            xml.append(self.user.xml())
 
         # Append reply posts, if any
         if len(self.posts) > 0:
