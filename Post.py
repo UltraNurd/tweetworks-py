@@ -9,6 +9,11 @@ Nicolas Ward
 # System includes
 import iso8601
 import lxml.etree
+from lxml.builder import E
+
+# Tweetworks includes
+#import Group
+import User
 
 class Post:
     """
@@ -71,10 +76,17 @@ class Post:
             self.bingo = False
 
         # The text contents of the post
-        self.body = xml.xpath("/post/body/text()")[0]
+        self.body = str(xml.xpath("/post/body/text()")[0])
 
         # The timestamp of the post
         self.created = iso8601.parse_date(xml.xpath("/post/created/text()")[0])
+
+        # The number of replies to this post, if any
+        replies = xml.xpath("/post/replies/text()")
+        if len(replies) == 1:
+            self.replies = int(replies[0])
+        else:
+            self.replies = 0
 
         # Group metadata, if the post wasn't public
         if self.group_id != None:
@@ -85,17 +97,61 @@ class Post:
 
         # Post author metadata
         user_string = lxml.etree.tostring(xml.xpath("/post/user")[0])
-        #self.user = User.User(lxml.etree.fromstring(user_string))
-
-        # The number of replies to this post, if any
-        replies = xml.xpath("/post/replies/text()")
-        if len(replies) == 1:
-            self.replies = int(replies[0])
-        else:
-            self.replies = 0
+        self.user = User.User(lxml.etree.fromstring(user_string))
 
         # The replies to this post, if any (select only non-empty child posts)
         self.posts = []
         for post_xml in xml.xpath("/post/posts/post[node()]"):
             post_string = lxml.etree.tostring(post_xml)
             self.posts.append(Post(lxml.etree.fromstring(post_string)))
+
+    def __str__(self):
+        """
+        Returns this Post as an XML string.
+        """
+        
+        # Get the XML tree and stringify
+        return lxml.etree.tostring(self.xml())
+
+    def __repr__(self):
+        """
+        Returns an eval-ready string for this Post's constructor.
+        """
+
+        return "Post(lxml.etree.parsestring(%s))" % repr(str(self))
+
+    def xml(self):
+        """
+        Generates an XML element tree for this Post.
+        """
+
+        # Construct the XML tree representing this Post
+        xml = E("post",
+                E("id", str(self.id)),
+                E("user_id", str(self.user_id)),
+                (E("group_id"), 
+                 E("group_id",
+                   str(self.group_id)))[self.group_id != None],
+                (E("parent_id"), 
+                 E("parent_id",
+                   str(self.parent_id)))[self.parent_id != None],
+                (E("twitter_id"), 
+                 E("twitter_id",
+                   str(self.twitter_id)))[self.twitter_id != None],
+                (E("bingo"), E("bingo", "1"))[self.bingo],
+                E("body", self.body),
+                E("created", str(self.created).replace(" ", "T")),
+                E("replies", str(self.replies)),
+                #(E("group"), self.group.xml())[self.group != None],
+                (E("user"), self.user.xml())[self.user != None]
+                )
+
+        # Append reply posts, if any
+        if len(self.posts) > 0:
+            posts_xml = E("posts", *[post.xml() for post in self.posts])
+            xml.append(posts_xml)
+        else:
+            xml.append(E("posts", E("post")))
+        
+        # Return the XML tree (NOT a string)
+        return xml
