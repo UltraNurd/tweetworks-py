@@ -40,8 +40,12 @@ class User:
         # User's "real" name
         self.name = unicode(xml.xpath("/user/name/text()")[0])
 
-        # Twitter ID of the user
-        self.twitter_id = int(xml.xpath("/user/twitter_id/text()")[0])
+        # Twitter ID of the user; this should always be present but isn't always
+        twitter_id = xml.xpath("/user/twitter_id/text()")
+        if len(twitter_id) == 1:
+            self.twitter_id = int(twitter_id[0])
+        else:
+            self.twitter_id = None
 
     def __str__(self):
         """
@@ -69,7 +73,8 @@ class User:
                 E("username", self.username),
                 E("avatar_url", self.avatar_url),
                 E("name", self.name),
-                E("twitter_id", str(self.twitter_id)),
+                E("twitter_id",
+                  ("", str(self.twitter_id))[self.twitter_id != None]),
                 )
         
         # Return the XML tree (NOT a string)
