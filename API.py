@@ -95,7 +95,7 @@ class API:
 
         # Parse the XML response
         xml_response = lxml.etree.parse(response)
-        print lxml.etree.tostring(xml_response, pretty_print=True)
+        #print lxml.etree.tostring(xml_response, pretty_print=True)
         
         # Check for errors
         error = xml_response.xpath("/error/text/text()")
@@ -104,6 +104,40 @@ class API:
 
         # Return the response XML
         return xml_response
+
+    def request_all_pages(self, url, page_reader, data = {}):
+        """
+        Repeatedly requests the specified URL with the specified POST data,
+        incrementing the page by 1 until no new pages are available. Each page
+        is read by the specified reader to convert XML into a list of objects,
+        which are appended. The final output list is returned.
+        """
+
+        # Loop over the requested pages
+        items = []
+        page = 1
+        last_items_xml_string = ""
+        while True:
+            # Add the current page number to the URL
+            paged_url = "%s?page=%d" % (url, page)
+            
+            # Read the items from the response XML
+            items_xml = self.request(paged_url, data)
+            items_xml_string = lxml.etree.tostring(items_xml)
+
+            # Check if this is the last page
+            if (last_items_xml_string == items_xml_string):
+                break
+
+            # Append these new items to the list
+            items = items + page_reader(items_xml)
+            last_items_xml_string = items_xml_string
+
+            # Increment the page
+            page = page + 1
+
+        # Return the full list of requested items
+        return items
 
     def read_post_xml(self, posts_xml):
         """
@@ -184,19 +218,45 @@ class API:
         # Read the posts from the response XML
         return self.read_post_xml(self.request(url))
 
-    def group_posts(self, group, recent = False):
+    def group_posts(self, group, recent = False, pages = None, all = False):
         """
         Retrieves all posts contained in the specified group; optionally only
         recently updated posts. Posts are returned in descending order by date.
 
+        A single page of 20 posts is retrieved if specified; additionally all
+        posts can be retrieved in 20-post increments to produce a single list.
+
         A private group requires authentication from a user in that group.
         """
 
-        # Format the request URL
-        url = "http://www.tweetworks.com/posts/group/%s/%s.xml" % (group, ("newest", "updated")[recent])
+        # Are we retrieving a single page?
+        if pages != None:
+            # Don't allow all + page
+            if all:
+                raise API.TweetworksException("Conflicting pages requested")
 
-        # Read the posts from the response XML
-        return self.read_post_xml(self.request(url))
+            # Loop over the requested pages
+            posts = []
+            for page in pages:
+                # Format the request URL
+                url = "http://www.tweetworks.com/posts/group/%s/%s.xml?page=%d" % (group, ("newest", "updated")[recent], page)
+
+                # Read the posts from the response XML
+                posts = posts + self.read_post_xml(self.request(url))
+
+            # Return the requested posts
+            return posts
+        else:
+            # Format the request URL
+            url = "http://www.tweetworks.com/posts/group/%s/%s.xml" % (group, ("newest", "updated")[recent])
+
+            # Are we retrieving all pages?
+            if all:
+                # Request the paginated posts as a single list
+                return self.request_all_pages(url, self.read_post_xml)
+            else:
+                # Read the posts from the response XML
+                return self.read_post_xml(self.request(url))
 
     def view_posts(self, id):
         """
