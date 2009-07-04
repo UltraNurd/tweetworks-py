@@ -153,6 +153,50 @@ class API:
         # Return the read posts
         return posts
 
+    def paginate_posts(self, url_prefix, sort_by_updated = False, pages = None, all = False):
+        """
+        Retrieves posts at the specified URL, paginating if necessary according
+        to the options.
+
+        sort_by_updated - Whether posts should be sorted in descending creation
+                          order or by descending last updated order.
+
+        pages - An optional list of specific pages to retrieve.
+        all - Whether all posts at this URL should be retrieved.
+
+        If no paging options are specified, 20 posts matching the criteria are
+        retrieved.
+        """
+
+        # Are we retrieving a single page?
+        if pages != None:
+            # Don't allow all + page
+            if all:
+                raise API.TweetworksException("Conflicting pages requested")
+
+            # Loop over the requested pages
+            posts = []
+            for page in pages:
+                # Format the request URL
+                url = "%s/%s.xml?page=%d" % (url_prefix, ("newest", "updated")[sort_by_updated], page)
+
+                # Read the posts from the response XML
+                posts = posts + self.read_post_xml(self.request(url))
+
+            # Return the requested posts
+            return posts
+        else:
+            # Format the request URL
+            url = "%s/%s.xml" % (url_prefix, ("newest", "updated")[sort_by_updated])
+
+            # Are we retrieving all pages?
+            if all:
+                # Request the paginated posts as a single list
+                return self.request_all_pages(url, self.read_post_xml)
+            else:
+                # Read the posts from the response XML
+                return self.read_post_xml(self.request(url))
+
     def read_group_xml(self, groups_xml):
         """
         Converts a <groups> element to a list of Group objects.
@@ -218,45 +262,19 @@ class API:
         # Read the posts from the response XML
         return self.read_post_xml(self.request(url))
 
-    def group_posts(self, group, recent = False, pages = None, all = False):
+    def group_posts(self, group, sort_by_updated = False, pages = None, all = False):
         """
-        Retrieves all posts contained in the specified group; optionally only
-        recently updated posts. Posts are returned in descending order by date.
-
-        A single page of 20 posts is retrieved if specified; additionally all
-        posts can be retrieved in 20-post increments to produce a single list.
+        Retrieves posts contained in the specified group, selected by the
+        specified optional criteria.
 
         A private group requires authentication from a user in that group.
         """
 
-        # Are we retrieving a single page?
-        if pages != None:
-            # Don't allow all + page
-            if all:
-                raise API.TweetworksException("Conflicting pages requested")
+        # Format the request URL prefix
+        url_prefix = "http://www.tweetworks.com/posts/group/%s" % group
 
-            # Loop over the requested pages
-            posts = []
-            for page in pages:
-                # Format the request URL
-                url = "http://www.tweetworks.com/posts/group/%s/%s.xml?page=%d" % (group, ("newest", "updated")[recent], page)
-
-                # Read the posts from the response XML
-                posts = posts + self.read_post_xml(self.request(url))
-
-            # Return the requested posts
-            return posts
-        else:
-            # Format the request URL
-            url = "http://www.tweetworks.com/posts/group/%s/%s.xml" % (group, ("newest", "updated")[recent])
-
-            # Are we retrieving all pages?
-            if all:
-                # Request the paginated posts as a single list
-                return self.request_all_pages(url, self.read_post_xml)
-            else:
-                # Read the posts from the response XML
-                return self.read_post_xml(self.request(url))
+        # Return the read (and paginated) posts
+        return self.paginate_posts(url_prefix, sort_by_updated, pages, all)
 
     def view_posts(self, id):
         """
