@@ -285,6 +285,46 @@ class API:
         # Return the read users
         return users
 
+    def paginate_users(self, url, data = {}, pages = None, all = False):
+        """
+        Retrieves users at the specified URL, paginating if necessary according
+        to the options.
+
+        data - Any additional data to add to the request.
+
+        pages - An optional list of specific pages to retrieve.
+        all - Whether all posts at this URL should be retrieved.
+
+        If no paging options are specified, 30 users matching the criteria are
+        retrieved.
+        """
+
+        # Are we retrieving a single page?
+        if pages != None:
+            # Don't allow all + page
+            if all:
+                raise API.TweetworksException("Conflicting pages requested")
+
+            # Loop over the requested pages
+            users = []
+            for page in pages:
+                # Format the request URL
+                page_url = "%s?page=%d" % (url, page)
+
+                # Read the users from the response XML
+                users = users + self.read_user_xml(self.request(page_url, data))
+
+            # Return the requested users
+            return users
+        else:
+            # Are we retrieving all pages?
+            if all:
+                # Request the paginated users as a single list
+                return self.request_all_pages(url + "?", self.read_user_xml, data)
+            else:
+                # Read the users from the response XML
+                return self.read_user_xml(self.request(url, data))
+
     def add_posts(self, body, group_id = None, parent_id = None, tweet = False):
         """
         Submits a post with the specified body text as the authenticated user.
@@ -438,31 +478,34 @@ class API:
         # Return the read (and paginated) groups
         return self.paginate_groups(url, data, all = True)
 
-    def group_users(self, group):
+    def group_users(self, group, pages = None, all = False):
         """
-        Retrieves the list of users who are members of the specified group.
+        Retrieves all users who are members of the specified group, selected
+        by the specified optional criteria.
         """
 
         # Format the request URL
         url = "http://www.tweetworks.com/users/group/%s.xml" % group
 
-        # Read the users from the response XML
-        return self.read_user_xml(self.request(url))
+        # Return the read (and paginated) users
+        return self.paginate_users(url, {}, pages, all)
 
-    def index_users(self):
+    def index_users(self, pages = None, all = False):
         """
-        Retrieves the list of Tweetworks users.
+        Retrieves all Tweetworks users, selected by the specified optional
+        criteria.
         """
 
         # Format the request URL
         url = "http://www.tweetworks.com/users/index.xml"
 
-        # Read the users from the response XML
-        return self.read_user_xml(self.request(url))
+        # Return the read (and paginated) users
+        return self.paginate_users(url, {}, pages, all)
 
     def search_users(self, query):
         """
-        Searches usernames and real names for the specified query string..
+        Searches usernames and real names for the specified query string. Always
+        returns all matches.
         """
 
         # Format the request URL
@@ -471,5 +514,5 @@ class API:
         # Format the post data
         data = {"data[query]" : query}
 
-        # Read the users from the response XML
-        return self.read_user_xml(self.request(url, data))
+        # Return the read (and paginated) users
+        return self.paginate_users(url, data, all = True)
