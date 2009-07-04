@@ -43,8 +43,7 @@ import lxml.etree
 from lxml.builder import E
 
 # Tweetworks includes
-import Group
-import User
+import tweetworks
 
 class Post:
     """
@@ -122,13 +121,13 @@ class Post:
         # Group metadata, if the post wasn't public
         if self.group_id != None:
             group_string = lxml.etree.tostring(xml.xpath("/post/group")[0])
-            self.group = Group.Group(lxml.etree.fromstring(group_string))
+            self.group = tweetworks.Group(lxml.etree.fromstring(group_string))
         else:
             self.group = None
 
         # Post author metadata
         user_string = lxml.etree.tostring(xml.xpath("/post/user")[0])
-        self.user = User.User(lxml.etree.fromstring(user_string))
+        self.user = tweetworks.User(lxml.etree.fromstring(user_string))
 
         # The replies to this post, if any (select only non-empty child posts)
         self.posts = []
@@ -149,7 +148,7 @@ class Post:
         Returns an eval-ready string for this Post's constructor.
         """
 
-        return "Post(lxml.etree.parsestring(%s))" % repr(str(self))
+        return "tweetworks.Post(lxml.etree.parsestring(%s))" % repr(str(self))
 
     def xml(self):
         """

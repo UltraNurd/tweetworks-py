@@ -91,7 +91,7 @@ class User:
         Returns an eval-ready string for this User's constructor.
         """
 
-        return "User(lxml.etree.parsestring(%s))" % repr(str(self))
+        return "tweetworks.User(lxml.etree.parsestring(%s))" % repr(str(self))
 
     def xml(self):
         """

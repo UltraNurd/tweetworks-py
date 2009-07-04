@@ -92,7 +92,7 @@ class Group:
         Returns an eval-ready string for this Group's constructor.
         """
 
-        return "Group(lxml.etree.parsestring(%s))" % repr(str(self))
+        return "tweetworks.Group(lxml.etree.parsestring(%s))" % repr(str(self))
 
     def xml(self):
         """

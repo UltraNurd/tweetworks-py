@@ -45,10 +45,7 @@ import urllib2
 import lxml.etree
 
 # Tweetworks includes
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-import Post
-import Group
-import User
+import tweetworks
 
 class API:
     """
@@ -257,7 +254,7 @@ class API:
         groups = []
         for group_xml in groups_xml.xpath("/groups/group"):
             group_string = lxml.etree.tostring(group_xml)
-            groups.append(Group.Group(lxml.etree.fromstring(group_string)))
+            groups.append(tweetworks.Group(lxml.etree.fromstring(group_string)))
 
         # Return the read groups
         return groups

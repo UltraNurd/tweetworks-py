@@ -39,15 +39,8 @@ via http://www.tweetworks.com/pages/contact.
 The term "Twitter" is Copyright © 2009 Twitter, Inc.
 """
 
-# Use system modules for directory manipulation
-import os
-
-# Generate a list of the modules in this directory
-modules = []
-for filename in os.listdir(__path__[0]):
-	if filename[-3:] == '.py' and not filename == '__init__.py':
-		modules.append(filename[:-3])
-
-# Run the module import commands
-for module in modules:
-    exec 'import %s' % module
+# Explicitly import each module's classes into the package namespace
+from API import *
+from Group import *
+from Post import *
+from User import *
