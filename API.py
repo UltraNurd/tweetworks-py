@@ -95,6 +95,7 @@ class API:
 
         # Parse the XML response
         xml_response = lxml.etree.parse(response)
+        #print url
         #print lxml.etree.tostring(xml_response, pretty_print=True)
         
         # Check for errors
@@ -111,6 +112,8 @@ class API:
         incrementing the page by 1 until no new pages are available. Each page
         is read by the specified reader to convert XML into a list of objects,
         which are appended. The final output list is returned.
+
+        url must be specified ending in ? or & as appropriate for the query.
         """
 
         # Loop over the requested pages
@@ -119,7 +122,7 @@ class API:
         last_items_xml_string = ""
         while True:
             # Add the current page number to the URL
-            paged_url = "%s?page=%d" % (url, page)
+            paged_url = "%spage=%d" % (url, page)
             
             # Read the items from the response XML
             items_xml = self.request(paged_url, data)
@@ -153,7 +156,7 @@ class API:
         # Return the read posts
         return posts
 
-    def paginate_posts(self, url_prefix, sort_by_updated = False, pages = None, all = False):
+    def paginate_posts(self, url_prefix, sort_by_updated = False, pages = None, all = False, before_id = None, after_id = None):
         """
         Retrieves posts at the specified URL, paginating if necessary according
         to the options.
@@ -164,9 +167,26 @@ class API:
         pages - An optional list of specific pages to retrieve.
         all - Whether all posts at this URL should be retrieved.
 
+        before_id - Retrieve posts created/updated before the specified post
+        after_id - Retrieve posts created/updated after the specified post
+
         If no paging options are specified, 20 posts matching the criteria are
         retrieved.
         """
+
+        # Format the request URL
+        url = "%s/%s.xml" % (url_prefix, ("newest", "updated")[sort_by_updated])
+
+        # Was a post offset specified?
+        if before_id != None:
+            # Format the post offset
+            url += "?beforeId=%d" % before_id
+            if after_id != None:
+                url += "&afterId=%d" % after_id
+        else:
+            # Format the post offset
+            if after_id != None:
+                url += "?afterId=%d" % after_id
 
         # Are we retrieving a single page?
         if pages != None:
@@ -178,21 +198,21 @@ class API:
             posts = []
             for page in pages:
                 # Format the request URL
-                url = "%s/%s.xml?page=%d" % (url_prefix, ("newest", "updated")[sort_by_updated], page)
+                if before_id != None or after_id != None:
+                    page_url = "%s&page=%d" % (url, page)
+                else:
+                    page_url = "%s?page=%d" % (url, page)
 
                 # Read the posts from the response XML
-                posts = posts + self.read_post_xml(self.request(url))
+                posts = posts + self.read_post_xml(self.request(page_url))
 
             # Return the requested posts
             return posts
         else:
-            # Format the request URL
-            url = "%s/%s.xml" % (url_prefix, ("newest", "updated")[sort_by_updated])
-
             # Are we retrieving all pages?
             if all:
                 # Request the paginated posts as a single list
-                return self.request_all_pages(url, self.read_post_xml)
+                return self.request_all_pages(url + "&", self.read_post_xml)
             else:
                 # Read the posts from the response XML
                 return self.read_post_xml(self.request(url))
@@ -248,21 +268,21 @@ class API:
         # Read the post from the response XML
         return Post.Post(self.request(url, data))
 
-    def contributed_posts(self, username, recent = False):
+    def contributed_posts(self, username, sort_by_updated = False, pages = None, all = False, before_id = None, after_id = None):
         """
-        Retrieves all posts contributed by the specified user; optionally only
-        recently updated posts. Posts are returned in descending order by date.
+        Retrieves posts contributed by the specified user, selected by the
+        specified optional criteria.
 
         Requires authentication from the specified user.
         """
 
-        # Format the request URL
-        url = "http://www.tweetworks.com/posts/contributed/%s/%s.xml" % (username, ("newest", "updated")[recent])
+        # Format the request URL prefix
+        url_prefix = "http://www.tweetworks.com/posts/contributed/%s" % username
 
-        # Read the posts from the response XML
-        return self.read_post_xml(self.request(url))
+        # Return the read (and paginated) posts
+        return self.paginate_posts(url_prefix, sort_by_updated, pages, all, before_id, after_id)
 
-    def group_posts(self, group, sort_by_updated = False, pages = None, all = False):
+    def group_posts(self, group, sort_by_updated = False, pages = None, all = False, before_id = None, after_id = None):
         """
         Retrieves posts contained in the specified group, selected by the
         specified optional criteria.
@@ -274,7 +294,32 @@ class API:
         url_prefix = "http://www.tweetworks.com/posts/group/%s" % group
 
         # Return the read (and paginated) posts
-        return self.paginate_posts(url_prefix, sort_by_updated, pages, all)
+        return self.paginate_posts(url_prefix, sort_by_updated, pages, all, before_id, after_id)
+
+    def index_posts(self, sort_by_updated = False, pages = None, all = False, before_id = None, after_id = None):
+        """
+        Retrieves all posts, selected by the specified optional criteria.
+        """
+
+        # Format the request URL prefix
+        url_prefix = "http://www.tweetworks.com/posts/index"
+
+        # Return the read (and paginated) posts
+        return self.paginate_posts(url_prefix, sort_by_updated, pages, all, before_id, after_id)
+
+    def joined_groups_posts(self, username, sort_by_updated = False, pages = None, all = False, before_id = None, after_id = None):
+        """
+        Retrieves posts contained in all of the groups joined by the specified
+        user, selected by the specified optional criteria.
+
+        Requires authentication from the specified user.
+        """
+
+        # Format the request URL prefix
+        url_prefix = "http://www.tweetworks.com/posts/joined_groups/%s" % username
+
+        # Return the read (and paginated) posts
+        return self.paginate_posts(url_prefix, sort_by_updated, pages, all, before_id, after_id)
 
     def view_posts(self, id):
         """
