@@ -231,6 +231,46 @@ class API:
         # Return the read groups
         return groups
 
+    def paginate_groups(self, url, data = {}, pages = None, all = False):
+        """
+        Retrieves groups at the specified URL, paginating if necessary according
+        to the options.
+
+        data - Any additional data to add to the request.
+
+        pages - An optional list of specific pages to retrieve.
+        all - Whether all posts at this URL should be retrieved.
+
+        If no paging options are specified, 30 groups matching the criteria are
+        retrieved.
+        """
+
+        # Are we retrieving a single page?
+        if pages != None:
+            # Don't allow all + page
+            if all:
+                raise API.TweetworksException("Conflicting pages requested")
+
+            # Loop over the requested pages
+            groups = []
+            for page in pages:
+                # Format the request URL
+                page_url = "%s?page=%d" % (url, page)
+
+                # Read the groups from the response XML
+                groups = groups + self.read_group_xml(self.request(page_url, data))
+
+            # Return the requested groups
+            return groups
+        else:
+            # Are we retrieving all pages?
+            if all:
+                # Request the paginated groups as a single list
+                return self.request_all_pages(url + "?", self.read_group_xml, data)
+            else:
+                # Read the groups from the response XML
+                return self.read_group_xml(self.request(url, data))
+
     def read_user_xml(self, users_xml):
         """
         Converts a <users> element to a list of User objects.
@@ -339,16 +379,17 @@ class API:
             raise API.TweetworksException("%d posts were returned" % len(posts),
                                           url)
 
-    def index_groups(self):
+    def index_groups(self, pages = None, all = False):
         """
-        Retrieves the list of Tweetworks groups.
+        Retrieves all Tweetworks groups, selected by the specified optional
+        criteria.
         """
 
         # Format the request URL
         url = "http://www.tweetworks.com/groups/index.xml"
 
-        # Read the groups from the response XML
-        return self.read_group_xml(self.request(url))
+        # Return the read (and paginated) groups
+        return self.paginate_groups(url, {}, pages, all)
 
     def join_groups(self, group):
         """
@@ -368,9 +409,10 @@ class API:
             raise API.TweetworksException("%d groups were joined" % len(posts),
                                           url)
 
-    def joined_groups(self, username):
+    def joined_groups(self, username, pages = None, all = False):
         """
-        Retrieves all groups of which the specified user is a member.
+        Retrieves all groups of which the specified user is a member, selected
+        by the specified optional criteria.
 
         Requires authentication from the specified user.
         """
@@ -378,13 +420,13 @@ class API:
         # Format the request URL
         url = "http://www.tweetworks.com/groups/joined/%s.xml" % username
 
-        # Read the groups from the response XML
-        return self.read_group_xml(self.request(url))
+        # Return the read (and paginated) groups
+        return self.paginate_groups(url, {}, pages, all)
 
     def search_groups(self, query):
         """
         Searches groups for the specified query string, including name,
-        description, and posts.
+        description, and posts. Always returns all matches.
         """
 
         # Format the request URL
@@ -393,8 +435,8 @@ class API:
         # Format the post data
         data = {"data[query]" : query}
 
-        # Read the groups from the response XML
-        return self.read_group_xml(self.request(url, data))
+        # Return the read (and paginated) groups
+        return self.paginate_groups(url, data, all = True)
 
     def group_users(self, group):
         """
