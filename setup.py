@@ -54,6 +54,7 @@ setup(
     # Dependencies
     install_requires = [
         "lxml>=2.2",
+        "iso8601>=0.1.4",
         ],
     setup_requires = [
         "setuptools",
