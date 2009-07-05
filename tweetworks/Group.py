@@ -49,6 +49,11 @@ class Group:
     def __init__(self, xml = None):
         """
         Reads group fields from the XML, or create an empty group.
+
+        id - int - Tweetworks numeric group ID
+        name - string - Tweetworks group name
+        private - boolean - Whether or not this is a private group
+        description - string - The short group description, if any
         """
 
         # Initialize an empty group if no XML was provided

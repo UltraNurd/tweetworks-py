@@ -49,6 +49,11 @@ class User:
     def __init__(self, xml = None):
         """
         Reads user fields from the XML, or create an empty user.
+
+        id - int - Tweetworks numeric user ID
+        username - string - Tweetworks/Twitter username
+        avatar_url - string - Twitter avatar URL
+        twitter_id - int - Twitter numeric user ID
         """
 
         # Initialize an empty user if no XML was provided

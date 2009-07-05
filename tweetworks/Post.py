@@ -53,6 +53,19 @@ class Post:
     def __init__(self, xml = None):
         """
         Reads post fields from the XML, or create an empty post.
+
+        id - int - Tweetworks numeric post ID
+        user_id - int - Tweetworks numeric user ID of poster
+        group_id - int - Tweetworks numeric ID of containing group, if any
+        parent_id - int - Tweetworks numeric ID of parent post, if any
+        twitter_id - int - Twitter numeric ID of post, if cross-posted
+        bingo - boolean - Whether this post has been marked as a bingo
+        body - string - The contents of this post
+        created - datetime - When this post was created on Tweetworks
+        group - tweetworks.Group - Object representing containing group, if any
+        user - tweetworks.User - Object representing poster
+        replies - int - The number of replies to this post, if any
+        posts - tweetworks.Post[] - The Post object replies to this post, if any
         """
 
         # Initialize an empty post if no XML was provided
