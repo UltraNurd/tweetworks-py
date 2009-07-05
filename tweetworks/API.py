@@ -94,7 +94,7 @@ class API:
         else:
             self.auth = None
 
-    def request(self, url, data = {}):
+    def __request(self, url, data = {}):
         """
         POST the data (if any) to the specified URL, and return the parsed
         XML. An exception is thrown if there was an error.
@@ -134,7 +134,7 @@ class API:
         # Return the response XML
         return xml_response
 
-    def request_all_pages(self, url, page_reader, data = {}):
+    def __request_all_pages(self, url, page_reader, data = {}):
         """
         Repeatedly requests the specified URL with the specified POST data,
         incrementing the page by 1 until no new pages are available. Each page
@@ -153,7 +153,7 @@ class API:
             paged_url = "%spage=%d" % (url, page)
             
             # Read the items from the response XML
-            items_xml = self.request(paged_url, data)
+            items_xml = self.__request(paged_url, data)
             items_xml_string = lxml.etree.tostring(items_xml)
 
             # Check if this is the last page
@@ -170,7 +170,7 @@ class API:
         # Return the full list of requested items
         return items
 
-    def read_post_xml(self, posts_xml):
+    def __read_post_xml(self, posts_xml):
         """
         Converts a <posts> element to a list of Post objects.
         """
@@ -184,7 +184,7 @@ class API:
         # Return the read posts
         return posts
 
-    def paginate_posts(self, url_prefix, sort_by_updated = False, pages = None, all = False, before_id = None, after_id = None):
+    def __paginate_posts(self, url_prefix, sort_by_updated = False, pages = None, all = False, before_id = None, after_id = None):
         """
         Retrieves posts at the specified URL, paginating if necessary according
         to the options.
@@ -232,7 +232,7 @@ class API:
                     page_url = "%s?page=%d" % (url, page)
 
                 # Read the posts from the response XML
-                posts = posts + self.read_post_xml(self.request(page_url))
+                posts = posts + self.__read_post_xml(self.__request(page_url))
 
             # Return the requested posts
             return posts
@@ -240,12 +240,12 @@ class API:
             # Are we retrieving all pages?
             if all:
                 # Request the paginated posts as a single list
-                return self.request_all_pages(url + "&", self.read_post_xml)
+                return self.__request_all_pages(url + "&", self.__read_post_xml)
             else:
                 # Read the posts from the response XML
-                return self.read_post_xml(self.request(url))
+                return self.__read_post_xml(self.__request(url))
 
-    def read_group_xml(self, groups_xml):
+    def __read_group_xml(self, groups_xml):
         """
         Converts a <groups> element to a list of Group objects.
         """
@@ -259,7 +259,7 @@ class API:
         # Return the read groups
         return groups
 
-    def paginate_groups(self, url, data = {}, pages = None, all = False):
+    def __paginate_groups(self, url, data = {}, pages = None, all = False):
         """
         Retrieves groups at the specified URL, paginating if necessary according
         to the options.
@@ -286,7 +286,7 @@ class API:
                 page_url = "%s?page=%d" % (url, page)
 
                 # Read the groups from the response XML
-                groups = groups + self.read_group_xml(self.request(page_url, data))
+                groups = groups + self.__read_group_xml(self.__request(page_url, data))
 
             # Return the requested groups
             return groups
@@ -294,12 +294,12 @@ class API:
             # Are we retrieving all pages?
             if all:
                 # Request the paginated groups as a single list
-                return self.request_all_pages(url + "?", self.read_group_xml, data)
+                return self.__request_all_pages(url + "?", self.__read_group_xml, data)
             else:
                 # Read the groups from the response XML
-                return self.read_group_xml(self.request(url, data))
+                return self.__read_group_xml(self.__request(url, data))
 
-    def read_user_xml(self, users_xml):
+    def __read_user_xml(self, users_xml):
         """
         Converts a <users> element to a list of User objects.
         """
@@ -313,7 +313,7 @@ class API:
         # Return the read users
         return users
 
-    def paginate_users(self, url, data = {}, pages = None, all = False):
+    def __paginate_users(self, url, data = {}, pages = None, all = False):
         """
         Retrieves users at the specified URL, paginating if necessary according
         to the options.
@@ -340,7 +340,7 @@ class API:
                 page_url = "%s?page=%d" % (url, page)
 
                 # Read the users from the response XML
-                users = users + self.read_user_xml(self.request(page_url, data))
+                users = users + self.__read_user_xml(self.__request(page_url, data))
 
             # Return the requested users
             return users
@@ -348,10 +348,10 @@ class API:
             # Are we retrieving all pages?
             if all:
                 # Request the paginated users as a single list
-                return self.request_all_pages(url + "?", self.read_user_xml, data)
+                return self.__request_all_pages(url + "?", self.__read_user_xml, data)
             else:
                 # Read the users from the response XML
-                return self.read_user_xml(self.request(url, data))
+                return self.__read_user_xml(self.__request(url, data))
 
     def add_posts(self, body, group_id = None, parent_id = None, tweet = False):
         """
@@ -374,7 +374,7 @@ class API:
                 "data[Post][sendToTwitter]" : (0, 1)[tweet]}
 
         # Read the post from the response XML
-        return Post.Post(self.request(url, data))
+        return Post.Post(self.__request(url, data))
 
     def contributed_posts(self, username, sort_by_updated = False, pages = None, all = False, before_id = None, after_id = None):
         """
@@ -388,7 +388,7 @@ class API:
         url_prefix = "http://www.tweetworks.com/posts/contributed/%s" % username
 
         # Return the read (and paginated) posts
-        return self.paginate_posts(url_prefix, sort_by_updated, pages, all, before_id, after_id)
+        return self.__paginate_posts(url_prefix, sort_by_updated, pages, all, before_id, after_id)
 
     def group_posts(self, group, sort_by_updated = False, pages = None, all = False, before_id = None, after_id = None):
         """
@@ -402,7 +402,7 @@ class API:
         url_prefix = "http://www.tweetworks.com/posts/group/%s" % group
 
         # Return the read (and paginated) posts
-        return self.paginate_posts(url_prefix, sort_by_updated, pages, all, before_id, after_id)
+        return self.__paginate_posts(url_prefix, sort_by_updated, pages, all, before_id, after_id)
 
     def index_posts(self, sort_by_updated = False, pages = None, all = False, before_id = None, after_id = None):
         """
@@ -413,7 +413,7 @@ class API:
         url_prefix = "http://www.tweetworks.com/posts/index"
 
         # Return the read (and paginated) posts
-        return self.paginate_posts(url_prefix, sort_by_updated, pages, all, before_id, after_id)
+        return self.__paginate_posts(url_prefix, sort_by_updated, pages, all, before_id, after_id)
 
     def joined_groups_posts(self, username, sort_by_updated = False, pages = None, all = False, before_id = None, after_id = None):
         """
@@ -427,7 +427,7 @@ class API:
         url_prefix = "http://www.tweetworks.com/posts/joined_groups/%s" % username
 
         # Return the read (and paginated) posts
-        return self.paginate_posts(url_prefix, sort_by_updated, pages, all, before_id, after_id)
+        return self.__paginate_posts(url_prefix, sort_by_updated, pages, all, before_id, after_id)
 
     def view_posts(self, id):
         """
@@ -438,7 +438,7 @@ class API:
         url = "http://www.tweetworks.com/posts/view/%d.xml" % id
 
         # Read the posts from the response XML
-        posts = self.read_post_xml(self.request(url))
+        posts = self.__read_post_xml(self.__request(url))
         if len(posts) == 1:
             # Return the single post
             return posts[0]
@@ -457,7 +457,7 @@ class API:
         url = "http://www.tweetworks.com/groups/index.xml"
 
         # Return the read (and paginated) groups
-        return self.paginate_groups(url, {}, pages, all)
+        return self.__paginate_groups(url, {}, pages, all)
 
     def join_groups(self, group):
         """
@@ -468,7 +468,7 @@ class API:
         url = "http://www.tweetworks.com/groups/join/%s.xml" % group
 
         # Read the groups from the response XML
-        groups = self.read_group_xml(self.request(url))
+        groups = self.__read_group_xml(self.__request(url))
         if len(groups) == 1:
             # Return the joined group
             return groups[0]
@@ -489,7 +489,7 @@ class API:
         url = "http://www.tweetworks.com/groups/joined/%s.xml" % username
 
         # Return the read (and paginated) groups
-        return self.paginate_groups(url, {}, pages, all)
+        return self.__paginate_groups(url, {}, pages, all)
 
     def search_groups(self, query):
         """
@@ -504,7 +504,7 @@ class API:
         data = {"data[query]" : query}
 
         # Return the read (and paginated) groups
-        return self.paginate_groups(url, data, all = True)
+        return self.__paginate_groups(url, data, all = True)
 
     def group_users(self, group, pages = None, all = False):
         """
@@ -516,7 +516,7 @@ class API:
         url = "http://www.tweetworks.com/users/group/%s.xml" % group
 
         # Return the read (and paginated) users
-        return self.paginate_users(url, {}, pages, all)
+        return self.__paginate_users(url, {}, pages, all)
 
     def index_users(self, pages = None, all = False):
         """
@@ -528,7 +528,7 @@ class API:
         url = "http://www.tweetworks.com/users/index.xml"
 
         # Return the read (and paginated) users
-        return self.paginate_users(url, {}, pages, all)
+        return self.__paginate_users(url, {}, pages, all)
 
     def search_users(self, query):
         """
@@ -543,4 +543,4 @@ class API:
         data = {"data[query]" : query}
 
         # Return the read (and paginated) users
-        return self.paginate_users(url, data, all = True)
+        return self.__paginate_users(url, data, all = True)
