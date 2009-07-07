@@ -22,5 +22,5 @@ documentation: http://www.ultranurd.net/code/tweetworks/doc.html
 Contributing
 
 The easiest way to help out is to interact with the project on github:
-http://github.com/UltraNurd/Tweetworks-Python-API/. If you're not able to dive
+http://github.com/UltraNurd/tweetworks-py/. If you're not able to dive
 into the code yourself, contact me with suggestions, bugfixes, and the like.
