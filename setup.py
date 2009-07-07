@@ -48,7 +48,7 @@ setup(
     packages = find_packages(),
     include_package_data = True,
     exclude_package_data = {
-        "":["LICENSE.txt", ".gitignore"]
+        "":["LICENSE.txt", "README.txt", ".gitignore"]
         },
 
     # Dependencies
@@ -65,6 +65,7 @@ setup(
     author = "Nicolas Ward",
     author_email = "ultranurd@yahoo.com",
     description = "Python bindings for the tweetworks.com web service API",
+    long_description = open("README.txt").read(),
     license = "GPL",
     url = "http://www.ultranurd.net/code/tweetworks/",
 )
