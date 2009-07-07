@@ -461,7 +461,9 @@ class API:
 
     def join_groups(self, group):
         """
-        Retrieves the list of Tweetworks groups.
+        Join the specified Tweetworks group as the authenticated user.
+
+        Requires authentication; the authenticated user will join the group.
         """
 
         # Format the request URL
